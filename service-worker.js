@@ -90,7 +90,12 @@ self.addEventListener('fetch',event=>{
                 if(bodyObj.query.includes('mutation')){
                     return saveOnLocal(bodyObj)
                     console.log("Offline mutation")
-                }else{
+                    //bodyObj.query.includes('tasks') voy a tener problemas cuando
+                    //obtengo un solo usuario
+                }else if(bodyObj.query.includes('tasks')){
+                    return caches.match("tasks")
+                }
+                else{
                     //Queries, es decir, buscarla en cache
                     const newResp={ok:false,offline:true}
                     return new Response(JSON.stringify(newResp))
@@ -98,7 +103,20 @@ self.addEventListener('fetch',event=>{
             })
 
         }else{
-            resp=fetch(event.request)
+            resp=fetch(event.request).then(async respObj=>{
+                const respClone= respObj.clone()
+                console.log("Datos recibidos con conexión")
+                //console.log(await respClone.json())
+                data=await respClone.clone().json()
+                if(data.data.tasks){
+                    console.log("La query respondió con una colección de tareas")
+                    caches.open(CACHE_DYNAMIC_NAME).then(cache=>{
+                        cache.put("tasks",respClone)
+                        clearCache(CACHE_DYNAMIC_NAME,CACHE_LIMIT)
+                    })
+                }
+                return respObj
+            })
         }
     }else{
         resp=fetch(event.request)

@@ -21,8 +21,7 @@ const newTaskSubscription=()=>{
         console.log("Conexión con ws cerrada")
     }
     websocket.onmessage=(event)=>{
-        const data=JSON.parse(event.data)
-        console.log(data)
+        const data=JSON.parse(event.data)        
         if(data.type==='connection_ack'){
             const msg=JSON.stringify({
                 id:'1',
@@ -40,6 +39,11 @@ const newTaskSubscription=()=>{
                 }
             })
             websocket.send(msg)
+        }
+        else if(data.type==='next'){
+            console.log(data.payload.data)
+            new Notification("notificación")
+
         }
     }
 }
